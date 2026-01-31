@@ -3,12 +3,7 @@ from db.models import Order
 from db.models import User
 from django.db.models import QuerySet
 
-from django.db import IntegrityError, transaction
-
-from django.contrib.auth import get_user_model
-
-
-User = get_user_model()
+from django.db import transaction
 
 
 def create_order(
@@ -31,6 +26,7 @@ def create_order(
             )
             ticket.full_clean()
             ticket.save()
+
 
 def get_orders(username: str = None) -> QuerySet:
     if username:

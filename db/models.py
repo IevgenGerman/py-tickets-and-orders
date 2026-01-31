@@ -94,8 +94,9 @@ class Ticket(models.Model):
         ]
 
     def __str__(self) -> str:
+        format_datetime = "%Y-%m-%d %H:%M:%S"
         return (f"{self.movie_session.movie.title} "
-                f"{self.order.created_at.strftime('%Y-%m-%d %H:%M:%S')} "
+                f"{self.movie_session.show_time.strftime(format_datetime)} "
                 f"(row: {self.row}, seat: {self.seat})")
 
     def clean(self) -> None:
@@ -104,11 +105,10 @@ class Ticket(models.Model):
             raise ValidationError({
                 "seat": (
                     f"seat number must be in available range: "
-                    f"(1, seats_in_row): (1, {self.movie_session.cinema_hall.seats_in_row})"
+                    f"(1, seats_in_row): (1, "
+                    f"{self.movie_session.cinema_hall.seats_in_row})"
                 )
             })
-
-
         if not (1 <= self.row <= self.movie_session.cinema_hall.rows):
             raise ValidationError({
                 "row": (
@@ -117,6 +117,6 @@ class Ticket(models.Model):
                 )
             })
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         self.full_clean()
         return super().save(*args, **kwargs)
