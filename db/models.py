@@ -1,8 +1,10 @@
+from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import DateTimeField, ForeignKey, IntegerField
 
 from django.core.exceptions import ValidationError
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -54,41 +56,57 @@ class MovieSession(models.Model):
     def __str__(self) -> str:
         return f"{self.movie.title} {str(self.show_time)}"
 
+
 class User(AbstractUser):
     pass
 
 
 class Order(models.Model):
-    created_at = DateTimeField(auto_now_add=True)
-    user = ForeignKey(to=User, on_delete=models.CASCADE)
+    created_at = DateTimeField(default=timezone.now)
+    user = ForeignKey(
+        to=User,
+        on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self) -> str:
         return self.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
 
 class Ticket(models.Model):
-    movie_session = ForeignKey(to=MovieSession, on_delete=models.CASCADE)
-    order = ForeignKey(to=Order, on_delete=models.CASCADE)
+    movie_session = ForeignKey(
+        to=MovieSession,
+        on_delete=models.CASCADE)
+    order = ForeignKey(
+        to=Order,
+        on_delete=models.CASCADE)
     row = IntegerField()
     seat = IntegerField()
 
     class Meta:
+        ordering = ["id"]
         constraints = [
             models.UniqueConstraint(
-                fields=['row', 'seat', 'movie_session'],
-                name='unique_ticket_booking'
+                fields=["row", "seat", "movie_session"],
+                name="unique_ticket_booking"
             )
         ]
 
     def __str__(self) -> str:
-        return f"<Ticket: {self.movie_session.movie.title} {self.order} (row: {self.row}, seat: {self.seat})>"
+        return (f"{self.movie_session.movie.title} "
+                f"{self.order.created_at.strftime('%Y-%m-%d %H:%M:%S')} "
+                f"(row: {self.row}, seat: {self.seat})")
+
 
     def clean(self) -> None:
         if not (1 <= self.seat <= self.movie_session.cinema_hall.seats_in_row):
             raise ValidationError({
-                "seat": f"Seat number must be in range [1, {self.movie_session.cinema_hall.seats_in_row}]."
+                "seat": f"Seat number must be in range [1, "
+                        f"{self.movie_session.cinema_hall.seats_in_row}]."
             })
         if not (1 <= self.row <= self.movie_session.cinema_hall.rows):
             raise ValidationError({
-                "row": f"Row number must be in range [1, {self.movie_session.cinema_hall.rows}]."
+                "row": f"Row number must be in range "
+                       f"[1, {self.movie_session.cinema_hall.rows}]."
             })
