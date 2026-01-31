@@ -98,15 +98,25 @@ class Ticket(models.Model):
                 f"{self.order.created_at.strftime('%Y-%m-%d %H:%M:%S')} "
                 f"(row: {self.row}, seat: {self.seat})")
 
-
     def clean(self) -> None:
+
         if not (1 <= self.seat <= self.movie_session.cinema_hall.seats_in_row):
             raise ValidationError({
-                "seat": f"Seat number must be in range [1, "
-                        f"{self.movie_session.cinema_hall.seats_in_row}]."
+                "seat": (
+                    f"seat number must be in available range: "
+                    f"(1, seats_in_row): (1, {self.movie_session.cinema_hall.seats_in_row})"
+                )
             })
+
+
         if not (1 <= self.row <= self.movie_session.cinema_hall.rows):
             raise ValidationError({
-                "row": f"Row number must be in range "
-                       f"[1, {self.movie_session.cinema_hall.rows}]."
+                "row": (
+                    f"row number must be in available range: "
+                    f"(1, rows): (1, {self.movie_session.cinema_hall.rows})"
+                )
             })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

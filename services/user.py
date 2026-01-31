@@ -11,9 +11,9 @@ def create_user(
     get_user_model().objects.create_user(
         username=username,
         password=password,
-        email=email,
-        first_name=first_name,
-        last_name=last_name)
+        email=email or "",
+        first_name=first_name or "",
+        last_name=last_name or "")
 
 
 def get_user(user_id: int) -> User:
@@ -38,3 +38,4 @@ def update_user(
         user.first_name = first_name
     if last_name:
         user.last_name = last_name
+    user.save()
